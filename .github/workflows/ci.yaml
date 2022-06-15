@@ -84,6 +84,7 @@ jobs:
           REGISTRY: carina-controller
         run: |
           echo "building images..."
+          go mod vendor
           docker buildx build -t carina-controller:e2e --platform=amd64 . 
           
           echo "creating images cache..."
@@ -214,11 +215,6 @@ jobs:
         run: |
           kind get kubeconfig > $HOME/.kube/kind-config-kind
           make test
-
-
-  
-
-
 
   coverage:
     name: Code coverage
