@@ -47,7 +47,7 @@
 - 迁移场景: 提供拷贝集群资源到其他集群的能力(复制同步开发、测试、生产环境的集群)
 
 ### 6. Velero工作流程
-![velero](../img/velero.png)
+[velero](../img/velero.png)
 运行时velero backup create my-backup：
 
 - Velero客户端调用Kubernetes API服务器以创建Backup对象；
