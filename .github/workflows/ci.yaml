@@ -217,43 +217,7 @@ jobs:
 
 
   
-    permissions:
-      contents: read  # for dorny/paths-filter to fetch a list of changed files
-      pull-requests: read  # for dorny/paths-filter to read pull requests
-    runs-on: ubuntu-latest
-    env:
-      PLATFORMS: linux/amd64
-    steps:
-      - name: Checkout
-        uses: actions/checkout@629c2de402a417ea7690ca6ce3f33229e27606a5 # v2
 
-      - uses: dorny/paths-filter@b2feaf19c27470162a626bd6fa8438ae5b263721 # v2
-        id: filter-images
-        with:
-          token: ${{ secrets.GITHUB_TOKEN }}
-          filters: |
-            kube-webhook-certgen:
-              - 'images/kube-webhook-certgen/**'
-
-      - name: Create Kubernetes cluster
-        id: kind
-        if: ${{ steps.filter-images.outputs.kube-webhook-certgen == 'true' }}
-        uses: engineerd/setup-kind@v0.5.0
-        with:
-          version: v0.14.0
-          image: kindest/node:v1.21.12
-
-      - name: Set up Go 1.18
-        id: go
-        if: ${{ steps.filter-images.outputs.kube-webhook-certgen == 'true' }}
-        uses: actions/setup-go@bfdd3570ce990073878bf10f6b2d79082de49492 # v2
-        with:
-          go-version: '1.18.2'
-
-      - name: kube-webhook-certgen image build
-        if: ${{ steps.filter-images.outputs.kube-webhook-certgen == 'true' }}
-        run: |
-          cd images/kube-webhook-certgen && make test test-e2e
 
 
   coverage:
