@@ -6,9 +6,9 @@ kversion ?=v1.20.2
 all: kc
 	@echo "e2e"
 	E2ETEST=1 /root/go/ginkgo --failFast -v .
-test:
+test: kc
 	go clean -testcache
-	go test -v .
+	go test -v . -coverprofile cover.out
 kc:
 	kind create cluster --config kind.yaml --image kindest/node:$(kversion) --name e2e
 	kubectl get nodes
