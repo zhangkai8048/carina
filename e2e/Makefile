@@ -3,10 +3,10 @@ Kind=v1.20.2
 kversion ?=v1.20.2
 
 
-all: kc
+all: 
 	@echo "e2e"
 	E2ETEST=1 /root/go/ginkgo --failFast -v .
-test: kc
+test: 
 	go clean -testcache
 	go test -v . -coverprofile cover.out
 kc:

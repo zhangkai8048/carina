@@ -14,39 +14,24 @@ permissions:
 
 jobs:
 
-  changes:
-    permissions:
-      contents: read  # for dorny/paths-filter to fetch a list of changed files
-      pull-requests: read  # for dorny/paths-filter to read pull requests
+  lint:
+    name: Lint
     runs-on: ubuntu-latest
-    outputs:
-      go: ${{ steps.filter.outputs.go }}
-      charts: ${{ steps.filter.outputs.charts }}
-
+    # Pull requests from the same repository won't trigger this checks as they were already triggered by the push
+    if: github.event_name == 'push' || github.event.pull_request.head.repo.full_name != github.repository
     steps:
-
-      - name: Checkout
-        uses: actions/checkout@629c2de402a417ea7690ca6ce3f33229e27606a5 # v2
-
-      - uses: dorny/paths-filter@b2feaf19c27470162a626bd6fa8438ae5b263721 # v2
-        id: filter
+      - name: Clone the code
+        uses: actions/checkout@v2
+      - name: Execute golangci-lint
+        uses: golangci/golangci-lint-action@v2
         with:
-          token: ${{ secrets.GITHUB_TOKEN }}
-          filters: |
-            go:
-              - '**/*.go'
-              - 'go.mod'
-              - 'go.sum'
-              - 'docs/**/*'
-            charts:
-              - 'charts/Chart.yaml'
-              - 'charts/**/*'
-
+          version: v1.29        # Always uses the latest patch version.
+          only-new-issues: true # Show only new issues if it's a pull request
  
   build:
     name: Build
     runs-on: ubuntu-latest
-    needs: changes
+    needs: lint
 
     steps:
 
@@ -85,7 +70,7 @@ jobs:
         run: |
           echo "building images..."
           go mod vendor
-          docker buildx build -t carina-controller:e2e --platform=amd64 . 
+          docker buildx build -t ${REGISTRY}:${TAG} --platform=${ARCH} . 
           
           echo "creating images cache..."
           docker save \
@@ -97,76 +82,13 @@ jobs:
           name: docker.tar.gz
           path: docker.tar.gz
 
+  
   helm:
-    name: Helm chart
+    name: helm
     runs-on: ubuntu-latest
     needs:
-      - changes
+      - lint
       - build
-    if: |
-      (needs.changes.outputs.charts == 'true')
-
-    steps:
-
-      - name: Checkout
-        uses: actions/checkout@629c2de402a417ea7690ca6ce3f33229e27606a5 # v2
-
-      - name: Setup Go
-        uses: actions/setup-go@bfdd3570ce990073878bf10f6b2d79082de49492 # v2
-        with:
-          go-version: '1.18.2'
-
-      - name: cache
-        uses: actions/download-artifact@f023be2c48cc18debc3bacd34cb396e0295e2869 # v2
-        with:
-          name: docker.tar.gz
-
-      # - name: Lint
-      #   run: |
-      #     ./build/run-in-docker.sh ./hack/verify-chart-lint.sh
-
-     
-      
-      - name: fix permissions
-        run: |
-          sudo mkdir -p $HOME/.kube
-          sudo chmod -R 777 $HOME/.kube
-
-      - name: Create Kubernetes cluster
-        id: kind
-        uses: engineerd/setup-kind@v0.5.0
-        with:
-          version: v0.14.0
-          image: kindest/node:v1.21.12
-
-      - uses: geekyeggo/delete-artifact@a6ab43859c960a8b74cbc6291f362c7fb51829ba # v1
-        with:
-          name: docker.tar.gz
-          failOnError: false
-
-      - name: Load images from cache
-        run: |
-          echo "loading docker images..."
-          pigz -dc docker.tar.gz | docker load
-
-      - name: Test
-        env:
-          KIND_CLUSTER_NAME: kind
-          SKIP_CLUSTER_CREATION: true
-          SKIP_IMAGE_CREATION: true
-        run: |
-          kind get kubeconfig > $HOME/.kube/kind-config-kind
-          make test
-
-  kubernetes:
-    name: Kubernetes
-    runs-on: ubuntu-latest
-    needs:
-      - changes
-      - build
-    if: |
-      (needs.changes.outputs.go == 'true')
-
     strategy:
       matrix:
         k8s: [v1.19.11, v1.20.7, v1.21.2, v1.22.9, v1.23.6]
@@ -214,6 +136,6 @@ jobs:
           SKIP_IMAGE_CREATION: true
         run: |
           kind get kubeconfig > $HOME/.kube/kind-config-kind
-          make test
+          make e2e
 
  
