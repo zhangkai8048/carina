@@ -8,7 +8,7 @@ require (
 	github.com/go-logr/logr v1.2.2
 	github.com/golang/protobuf v1.5.2
 	github.com/labstack/echo/v4 v4.7.1
-	github.com/mitchellh/mapstructure v1.4.3
+	github.com/mitchellh/mapstructure v1.5.0
 	github.com/natefinch/lumberjack v2.0.0+incompatible
 	github.com/onsi/ginkgo v1.16.5
 	github.com/onsi/gomega v1.18.1
