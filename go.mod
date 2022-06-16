@@ -3,7 +3,7 @@ module github.com/carina-io/carina
 go 1.17
 
 require (
-	github.com/container-storage-interface/spec v1.5.0
+	github.com/container-storage-interface/spec v1.6.0
 	github.com/fsnotify/fsnotify v1.5.1
 	github.com/go-logr/logr v1.2.2
 	github.com/golang/protobuf v1.5.2
