@@ -100,7 +100,7 @@ jobs:
         uses: actions/checkout@629c2de402a417ea7690ca6ce3f33229e27606a5 # v2
 
       - name: cache
-        uses: actions/download-artifact@82c141cc518b40d92cc801eee768e7aafc9c2fa2 # v2
+        uses: actions/download-artifact@f023be2c48cc18debc3bacd34cb396e0295e2869 # v2
         with:
           name: docker.tar.gz
 
@@ -126,14 +126,15 @@ jobs:
               docker exec $$n losetup -f /tmp/disk$$i.device --show; \
             done \
           done
-          
+
           echo "installing helm 3..."
           curl -sSL https://raw.githubusercontent.com/helm/helm/master/scripts/get-helm-3 | bash
 
       - name: Load images from cache
         run: |
           echo "loading docker images..."
-          pigz -dc docker.tar.gz | docker load
+          #pigz -dc docker.tar.gz | docker load
+          pwd && ls 
       - name: deploy
         run: |
           echo "deploy carina"
