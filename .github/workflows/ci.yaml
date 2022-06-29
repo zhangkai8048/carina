@@ -84,8 +84,8 @@ jobs:
           path: docker.tar.gz
 
   
-  helm:
-    name: helm
+  kubernetes:
+    name: kubernetes
     runs-on: ubuntu-latest
     needs:
      # - lint
@@ -112,16 +112,21 @@ jobs:
           config: e2e/kind.yaml
           image: kindest/node:${{ matrix.k8s }}
 
-      - uses: geekyeggo/delete-artifact@a6ab43859c960a8b74cbc6291f362c7fb51829ba # v1
-        with:
-          name: docker.tar.gz
-          failOnError: false
-
       - name: Prepare cluster for testing
         id: local-path
         run: |
           kubectl version
-          echo
+          kubectl get nodes
+          for n in `docker ps --filter name=worker --format "{{.Names}}"`; \
+          do \
+            for i in `seq 1 5`; \
+            do \
+              docker exec $$n truncate --size=200G /tmp/disk$$i.device && \
+              sleep 2 &&\
+              docker exec $$n losetup -f /tmp/disk$$i.device --show; \
+            done \
+          done
+          
           echo "installing helm 3..."
           curl -sSL https://raw.githubusercontent.com/helm/helm/master/scripts/get-helm-3 | bash
 
@@ -132,7 +137,7 @@ jobs:
       - name: deploy
         run: |
           echo "deploy carina"
-          make install && make deploy
+          helm install carina charts/  
       - name: Run e2e tests
         env:
           KIND_CLUSTER_NAME: kind
